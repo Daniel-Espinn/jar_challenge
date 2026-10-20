@@ -80,10 +80,10 @@ def calcular_reserva(distancia_m: float, velocidad_ms: float, factor_cambio:floa
     Detalle: si la reserva sale demasiado chica tenemos poco tiemopo de vuelta y hay que ver si debemos volver
     si es muy grande debemos seguir explorando.
     """
-    if not velocidad_ms != 0:
-        raise ValueError("Velocidad no puede ser cero!!!")
+    if not velocidad_ms > 0:
+        raise ValueError(f"La velocidad debe ser positiva, se recibio {velocidad_ms}")
     if not distancia_m >= 0:
-        raise ValueError("La distancia recorrida no puede ser negativa!!!")
+        raise ValueError(f"La distancia a la largada no puede ser negativa, se recibió {distancia_m}")
     reserva_s = (distancia_m / velocidad_ms) * factor_cambio + margen_s
     return reserva_s
 
@@ -109,10 +109,8 @@ def hay_que_volver(tiempo_restante_s: float, reserva_s:float, reportes_hechos:in
         return volver_a_inicio
 
 def reportes_disponibles(reportes_hechos:int, n_victimas:int) -> int:
-    if not reportes_hechos <= n_victimas:
-        raise ValueError("ERROR: Los reportes hechos no pueden ser mayores a la cantidad de victimas")
     reportes_restantes = n_victimas - reportes_hechos
-    return reportes_restantes
+    return max(0,reportes_restantes)
 
 
 def demasiado_tiempo_quieto(t_ultimo_movimiento_s: float, t_ahora_s:float, limite_s: float = 40.0) -> bool:

@@ -61,15 +61,22 @@ def test_cuaternion_a_yaw(z, w, esperado):
 def test_tiempo_restante(t_inicio, t_ahora, duracion_s, esperado):
     assert tiempo_restante(t_inicio, t_ahora, duracion_s) == pytest.approx(esperado)
 
-@pytest.mark.parametrize("distancia_m, velocidad_ms, factor_cambio, margen_s, esperado", [
+@pytest.mark.parametrize("distancia_m, velocidad_ms, factor_camino, margen_s, esperado", [
     (8.0, 0.25, 1.5, 20.0, 68.0),
     (0.0, 0.25, 1.5, 20.0, 20.0),
-    (9.0, 0.0, 1.5, 20.0, ValueError),
-    (-1.0, 0.25, 1.5, 20.0, ValueError)
 ])
-def test_calcular_reserva(distancia_m, velocidad_ms, factor_cambio, margen_s, esperado):
-    assert calcular_reserva(distancia_m, velocidad_ms, factor_cambio, margen_s) == pytest.approx(esperado)
+def test_calcular_reserva(distancia_m, velocidad_ms, factor_camino, margen_s, esperado):
+    assert calcular_reserva(distancia_m, velocidad_ms, factor_camino, margen_s) == pytest.approx(esperado)
 
+
+@pytest.mark.parametrize("distancia_m, velocidad_ms", [
+    (8.0, 0.0),
+    (8.0, -0.1),
+    (-1.0, 0.25),
+])
+def test_calcular_reserva_invalida(distancia_m, velocidad_ms):
+    with pytest.raises(ValueError):
+        calcular_reserva(distancia_m, velocidad_ms)
 @pytest.mark.parametrize("tiempo_restante_s, reserva_s, reportes_hechos, n_victimas, quedan_viewpoints, esperado", [
     (300, 68, 1, 3, True, False),
     (67, 68, 1, 3, True, True),
