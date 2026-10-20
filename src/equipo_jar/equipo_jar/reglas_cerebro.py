@@ -108,4 +108,21 @@ def hay_que_volver(tiempo_restante_s: float, reserva_s:float, reportes_hechos:in
     else:
         return volver_a_inicio
 
+def reportes_disponibles(reportes_hechos:int, n_victimas:int) -> int:
+    if not reportes_hechos <= n_victimas:
+        raise ValueError("ERROR: Los reportes hechos no pueden ser mayores a la cantidad de victimas")
+    reportes_restantes = n_victimas - reportes_hechos
+    return reportes_restantes
+
+
+def demasiado_tiempo_quieto(t_ultimo_movimiento_s: float, t_ahora_s:float, limite_s: float = 40.0) -> bool:
+    mucho_tiempo_quieto = False
+    if (t_ahora_s - t_ultimo_movimiento_s) >= limite_s:
+        mucho_tiempo_quieto = True
+        return mucho_tiempo_quieto
+    else:
+        return mucho_tiempo_quieto
+
+    
+
 

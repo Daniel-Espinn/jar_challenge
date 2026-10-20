@@ -10,7 +10,7 @@
 
 import math
 import pytest
-from equipo_jar.reglas_cerebro import PI, Pose2D, distancia, normalizar_angulo, yaw_a_cuaternion, cuaternion_a_yaw, tiempo_restante, calcular_reserva
+from equipo_jar.reglas_cerebro import PI, Pose2D, distancia, normalizar_angulo, yaw_a_cuaternion, cuaternion_a_yaw, tiempo_restante, calcular_reserva, hay_que_volver, reportes_disponibles, demasiado_tiempo_quieto
 
 @pytest.mark.parametrize("a, b, esperado", [
     ((0.0, 0,0), (3.0,4.0), 5.0),
@@ -70,6 +70,29 @@ def test_tiempo_restante(t_inicio, t_ahora, duracion_s, esperado):
 def test_calcular_reserva(distancia_m, velocidad_ms, factor_cambio, margen_s, esperado):
     assert calcular_reserva(distancia_m, velocidad_ms, factor_cambio, margen_s) == pytest.approx(esperado)
 
-@Pytest.mark.parametrize("tiempo_restante_s, reserva_s", [
-
+@pytest.mark.parametrize("tiempo_restante_s, reserva_s, reportes_hechos, n_victimas, quedan_viewpoints, esperado", [
+    (300, 68, 1, 3, True, False),
+    (67, 68, 1, 3, True, True),
+    (68, 68, 1, 3, True, False),
+    (300, 68, 3, 3, True, True),
+    (300, 68, 1, 3, False, True),
 ])
+def test_hay_que_volver(tiempo_restante_s, reserva_s, reportes_hechos, n_victimas, quedan_viewpoints, esperado):
+    assert hay_que_volver(tiempo_restante_s, reserva_s, reportes_hechos, n_victimas, quedan_viewpoints) == pytest.approx(esperado)
+
+@pytest.mark.parametrize("reportes_hechos, n_victimas, esperado", [
+    (0,3,3),
+    (1,3,2),
+    (3,3,0),
+    (4,3,0),
+])
+def test_reportes_disponibles(reportes_hechos, n_victimas, esperado):
+    assert reportes_disponibles(reportes_hechos, n_victimas) == pytest.approx(esperado)
+
+@pytest.mark.parametrize("t_ultimo_movimiento_s, t_ahora_s, esperado", [
+    (100, 130, False),
+    (100, 140, True),
+    (100, 200, True),
+])
+def test_demasiado_tiempo_quieto(t_ultimo_movimiento_s, t_ahora_s, esperado):
+    assert demasiado_tiempo_quieto(t_ultimo_movimiento_s, t_ahora_s) == pytest.approx(esperado)
