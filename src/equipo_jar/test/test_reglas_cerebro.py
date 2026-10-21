@@ -10,7 +10,7 @@
 
 import math
 import pytest
-from equipo_jar.reglas_cerebro import PI, Pose2D, distancia, normalizar_angulo, yaw_a_cuaternion, cuaternion_a_yaw, tiempo_restante, calcular_reserva, hay_que_volver, reportes_disponibles, demasiado_tiempo_quieto
+from equipo_jar.reglas_cerebro import PI, Pose2D, distancia, normalizar_angulo, yaw_a_cuaternion, cuaternion_a_yaw, tiempo_restante, calcular_reserva, hay_que_volver, reportes_disponibles, demasiado_tiempo_quieto, toca_loguear
 
 @pytest.mark.parametrize("a, b, esperado", [
     ((0.0, 0,0), (3.0,4.0), 5.0),
@@ -103,3 +103,12 @@ def test_reportes_disponibles(reportes_hechos, n_victimas, esperado):
 ])
 def test_demasiado_tiempo_quieto(t_ultimo_movimiento_s, t_ahora_s, esperado):
     assert demasiado_tiempo_quieto(t_ultimo_movimiento_s, t_ahora_s) == pytest.approx(esperado)
+
+@pytest.mark.parametrize("t_ultimo_log_s, t_ahora_s, periodo_s, esperado", [
+    (None, 5, 10, True),
+    (100, 105, 10, False),
+    (100, 110, 10, True),
+    (100, 115, 10, True),
+])
+def test_toca_loguear(t_ultimo_log_s, t_ahora_s, periodo_s, esperado):
+    assert toca_loguear(t_ultimo_log_s, t_ahora_s, periodo_s) == pytest.approx(esperado)

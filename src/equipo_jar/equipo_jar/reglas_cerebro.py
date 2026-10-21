@@ -109,17 +109,51 @@ def hay_que_volver(tiempo_restante_s: float, reserva_s:float, reportes_hechos:in
         return volver_a_inicio
 
 def reportes_disponibles(reportes_hechos:int, n_victimas:int) -> int:
+    """
+    Chequear reportes que nos quedan por usar.
+    (no desarrollo xq es bastante intuitiva)
+    """
     reportes_restantes = n_victimas - reportes_hechos
     return max(0,reportes_restantes)
 
 
 def demasiado_tiempo_quieto(t_ultimo_movimiento_s: float, t_ahora_s:float, limite_s: float = 40.0) -> bool:
+    """
+    Si estuvimos mucho tiempo quietos devuelve True, recordar que si
+    estamos mas de 60s quietos quedamos descalificados.
+    IN:
+        t_ultimo_movimiento_s: tiempo desde el ultimo movimiento en segundos
+        t_ahora_s: tiempo actual desde que arranco a correr en segundos
+        limite_s: limite de segundos que queremos tener como colchon
+    OUU:
+        mucho_tiempo_quieto: booleano
+    """
+    #
     mucho_tiempo_quieto = False
     if (t_ahora_s - t_ultimo_movimiento_s) >= limite_s:
         mucho_tiempo_quieto = True
         return mucho_tiempo_quieto
     else:
         return mucho_tiempo_quieto
+
+def toca_loguear(t_ultimo_log_s:float | None, t_ahora_s:float, periodo_s:float = 10.0) -> bool:
+    """
+    Si no logueamos o si pasaron mas de x segundos desde el ultimo log queremos volver
+    a loguear, no logueamos constantemente para no saturar cada 10s la terminal
+    IN:
+        t_ultimo_log_s: tiempo en segundos desde el ultimo log, puede ser None si no se logueo
+        t_ahora_s: tiempo en segundos actual, del robot, no real
+        periodo_s: cada cuanto queremos loguear en segundos
+    OUT:
+        loguear: bool
+    Nota: Arranca en None porque puede ser que el mapa llegue un poco
+    mas tarde de lo que arranca la simulacion y comenzariamos a loguear
+    sin estar en ningun lugar
+    """
+    loguear = False
+    if t_ultimo_log_s == None or (t_ahora_s - t_ultimo_log_s) >= periodo_s:
+        loguear = True
+    return loguear
 
     
 

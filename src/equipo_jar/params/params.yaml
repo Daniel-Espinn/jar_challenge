@@ -10,3 +10,8 @@ nodo_equipo:
     frecuencia_control_hz: 10.0
     velocidad_lineal_max: 0.30      # m/s
     velocidad_angular_max: 1.00     # rad/s
+    velocidad_regreso_ms: 0.25      # para usar en calcular_reserva. pd: no usamos velocidad maxima porque no queremos chocarnos nada y perder puntos por giros, etc
+    factor_cambio: 1.5              # tmb en calcular_reserva
+    margen_regreso_s: 20.0          # tmb en calcular_reserva
+    duracion_corrida_s: 600.0       # usar en tiempo_restante
+    periodo_logs_s: 10.0            # usar en toca_loguear
