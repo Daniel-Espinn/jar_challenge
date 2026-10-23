@@ -65,7 +65,6 @@ class NodoEquipo(Node):
             return  # esperar el mapa: no mover el robot ni reportar antes
 
         # TODO: acá va tu estrategia. Por ahora el robot se queda quieto.
-        self.pub_cmd_vel.publish(Twist())
 
     def reportar_victima(self, x, y):
         """Publica un reporte. Cada llamada gasta un reporte (§7.2)."""

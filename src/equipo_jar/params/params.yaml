@@ -10,3 +10,12 @@ nodo_equipo:
     frecuencia_control_hz: 10.0
     velocidad_lineal_max: 0.30      # m/s
     velocidad_angular_max: 1.00     # rad/s
+
+navegacion:
+  ros__parameters:
+    velocidad_maxima = 0.25
+    radio_repulsion = .40
+    ganancia_repulsiva = 0.15
+    tiempo_asentamiento_s = 3.0
+    tiempo_regreso_s = 480.0
+    tolerancia_llegada = 0.15

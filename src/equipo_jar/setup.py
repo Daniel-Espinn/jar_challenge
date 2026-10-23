@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'nodo_equipo = equipo_jar.nodo_equipo:main',
+            'navegacion = equipo_jar.navegacion:main',
         ],
     },
 )

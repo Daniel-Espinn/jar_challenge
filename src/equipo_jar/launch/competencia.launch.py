@@ -44,6 +44,14 @@ def generate_launch_description():
                 'cantidad_victimas': ParameterValue(victimas, value_type=int),
             }],
         ),
-        # Acá se agregan el resto de los nodos del equipo (localización,
-        # navegación, percepción...). Todos con el mismo `parameters=[params, ...]`.
+        Node(
+            package='equipo_jar',
+            executable='navegacion',
+            name='navegacion',
+            output='screen',
+            parameters=[params, {
+                'use_sim_time': use_sim_time,
+                'cantidad_victimas': ParameterValue(victimas, value_type=int),
+            }]
+        )
     ])
