@@ -4,7 +4,7 @@ Van a ser llamadas en percepcion.py
 '''
 import numpy as np
 
-def agrupar_en_rachas(booleanos: np.ndarray):
+def agrupar_en_rachas():
     """
     Agrupar los índices contiguos de un array booleano en "rachas".
 
@@ -57,3 +57,49 @@ def agrupar_en_rachas(booleanos: np.ndarray):
 
     # Paso 5 devolvemos la lista d erachas
     return rachas
+
+
+def puntos_en_mapa(rangos, angulos, tx, ty, yaw, rango_min, rango_max):
+    """
+    Como necesitamos donde esta cada objeto en el mapa y el lidar
+    nos da a que distancia del sensor esta cada cosa, esta funcion hace
+    esa traduccion.
+    """
+    # Nos quedamos con aquellos rayos que cumplen que 1.son finitos, 2.cuya distancia
+    # es mayor a la distancia minima 3.y cuya distancia es menor a la maxima
+    validos = (np.isfinite(rangos)) & (rangos >= rango_min) & (rangos <= rango_max)
+    # modificamos rangos para que los validos queden en su posicion
+    # y aquellos que no sean validos se le spone cero para que no molesten
+    rangos = np.where(validos,rangos,0.0)
+    # ?
+    xs_laser = rangos * np.cos(angulos)
+    ys_laser = rangos * np.sin(angulos)
+    # ?
+    c, s = np.cos(yaw), np.sin(yaw)
+    # Aplicamos la formula para obtener los puntos en el mapa
+    # usando las transformaciones. Tambien devolvemos los 
+    # los valores validos
+    xs_map = tx + c*xs_laser - s*ys_laser
+    ys_map = ty + s*xs_laser + c*ys_laser
+    return xs_map, ys_map, validos
+
+def estimar_mitad_caja(ancho, ancho_min, ancho_max):
+    valor_ancho = np.clip(ancho, ancho_min, ancho_max)
+    mitad_caja = valor_ancho / 2
+    return mitad_caja
+
+def corregir_al_centro(x_cara, y_cara, x_robot, y_robot, mitad_caja):
+    '''
+    Correo el punto de la cara media caja mas lejos del robot
+    porque estimamos que ahi esta el centro
+    '''
+    dx = x_cara - x_robot
+    dy = y_cara - y_robot
+    largo = np.hypot(dx, dy)
+
+    if largo == 0.0:
+        return (x_cara, y_cara)
+    else:
+        x_centro = x_cara + mitad_caja * (dx / largo)
+        y_centro = y_cara + mitad_caja * (dy / largo)
+        return (x_centro, y_centro)
