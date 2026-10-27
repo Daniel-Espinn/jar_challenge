@@ -22,18 +22,26 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
+from nav2_common.launch import RewrittenYaml
 
 
 def generate_launch_description():
-    params = os.path.join(
-        get_package_share_directory('equipo_jar'), 'params', 'params.yaml')
+    share = get_package_share_directory('equipo_jar')
+    params = os.path.join(share, 'params', 'params.yaml')
     use_sim_time = LaunchConfiguration('use_sim_time')
     victimas = LaunchConfiguration('victimas')
+
+    nav2_params = RewrittenYaml(
+        source_file=os.path.join(share, 'params', 'nav2_params.yaml'),
+        root_key='',
+        param_rewrites={'use_sim_time': use_sim_time},
+        convert_types=True)
 
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('victimas', default_value='5',
                               description='cantidad de víctimas a buscar (N)'),
+
         Node(
             package='equipo_jar',
             executable='nodo_equipo',
@@ -44,14 +52,62 @@ def generate_launch_description():
                 'cantidad_victimas': ParameterValue(victimas, value_type=int),
             }],
         ),
+
         Node(
-            package='equipo_jar',
-            executable='navegacion',
-            name='navegacion',
+            package='nav2_amcl',
+            executable='amcl',
+            name='amcl',
             output='screen',
-            parameters=[params, {
-                'use_sim_time': use_sim_time,
-                'cantidad_victimas': ParameterValue(victimas, value_type=int),
-            }]
-        )
+            parameters=[nav2_params],
+        ),
+        Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager_localizacion',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time,
+                         'autostart': True,
+                         'bond_timeout': 0.0,
+                         'node_names': ['amcl']}],
+        ),
+
+        Node(
+            package='nav2_controller',
+            executable='controller_server',
+            name='controller_server',
+            output='screen',
+            parameters=[nav2_params],
+        ),
+        Node(
+            package='nav2_planner',
+            executable='planner_server',
+            name='planner_server',
+            output='screen',
+            parameters=[nav2_params],
+        ),
+        Node(
+            package='nav2_behaviors',
+            executable='behavior_server',
+            name='behavior_server',
+            output='screen',
+            parameters=[nav2_params],
+        ),
+        Node(
+            package='nav2_bt_navigator',
+            executable='bt_navigator',
+            name='bt_navigator',
+            output='screen',
+            parameters=[nav2_params],
+        ),
+        Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager_navegacion',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time,
+                         'autostart': True,
+                         'bond_timeout': 0.0,
+                         'node_names': ['controller_server', 'planner_server',
+                                        'behavior_server', 'bt_navigator']}],
+        ),
     ])
