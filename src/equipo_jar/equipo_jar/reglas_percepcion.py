@@ -92,7 +92,7 @@ def corregir_al_centro(x_cara, y_cara, x_robot, y_robot, mitad_caja):
         return (x_centro, y_centro)
 
 def mascara_rojo(imagen_bgr, hue_rojo_bajo_1, hue_rojo_alto_1, hue_rojo_bajo_2, hue_rojo_alto_2,
-                  saturacion_min, valor_min):
+                  saturacion_min, valor_min) -> np.ndarray:
     """Máscara binaria (255 = rojo)."""
     # bgr a hsv
     imagen_hsv = cv2.cvtColor(imagen_bgr, cv2.COLOR_BGR2HSV)
@@ -103,7 +103,7 @@ def mascara_rojo(imagen_bgr, hue_rojo_bajo_1, hue_rojo_alto_1, hue_rojo_bajo_2, 
     bajo2 = np.array([hue_rojo_bajo_2, saturacion_min, valor_min])
     alto2 = np.array([hue_rojo_alto_2, 255, 255])
 
-    # creamos mascaras
+    # creamos rangos de color bajo y alto
     mascara1 = cv2.inRange(imagen_hsv, bajo1, alto1)
     mascara2 = cv2.inRange(imagen_hsv, bajo2, alto2)
 
@@ -122,8 +122,9 @@ def rayos_sobre_rojo(rangos, angulos, R, t, fx, fy, cx, cy, mascara) -> np.array
     '''
 
     # punto lidar
-    x = rangos * np.cos(angulos)
-    y = rangos * np.sin(angulos)
+    rangos_seguros = np.where(np.isfinite(rangos), rangos, 0.0)
+    x = rangos_seguros * np.cos(angulos)
+    y = rangos_seguros * np.sin(angulos)
 
     # fila [x,y,0] por rayo
     punto_laser = np.stack([x, y, np.zeros_like(x)], axis=1)
@@ -150,3 +151,11 @@ def rayos_sobre_rojo(rangos, angulos, R, t, fx, fy, cx, cy, mascara) -> np.array
     sobre_rojo = np.zeros(len(rangos), dtype=bool)
     sobre_rojo[ok] = mascara[filas[ok], columnas[ok]] > 0
     return sobre_rojo
+
+def cuaternion_a_matriz(x, y, z, w):
+    """Matriz de rotación 3x3 de un cuaternión (x, y, z, w)."""
+    return np.array([
+        [1 - 2*(y*y + z*z),     2*(x*y - z*w),     2*(x*z + y*w)],
+        [    2*(x*y + z*w), 1 - 2*(x*x + z*z),     2*(y*z - x*w)],
+        [    2*(x*z - y*w),     2*(y*z + x*w), 1 - 2*(x*x + y*y)],
+    ])
