@@ -233,9 +233,9 @@ global_costmap:
           marking: True
           data_type: "LaserScan"
           raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
+          raytrace_min_range: 0.25
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          obstacle_min_range: 0.25
       # El "halo" alrededor de cada obstáculo (mapeado o no): mismo rol que
       # el margen de seguridad que programabas a mano en la evasión de
       # semana 03, acá una capa más en vez de un `if distancia < margen`.
@@ -299,9 +299,9 @@ local_costmap:
           marking: True
           data_type: "LaserScan"
           raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
+          raytrace_min_range: 0.25
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          obstacle_min_range: 0.25
       # A diferencia del global, el local SÍ trae la capa estática (para
       # que la ventana rodante también sepa dónde están las paredes reales
       # cerca del robot, no solo lo que ve el lidar).
@@ -324,7 +324,7 @@ controller_server:
     # 20 Hz: cada cuánto controller_server le pide una nueva velocidad al
     # plugin — el mismo rol que la frecuencia de tu loop de control manual
     # en semana 03, ahora declarativo en vez de un `rate.sleep()`.
-    controller_frequency: 20.0
+    controller_frequency: 10.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
@@ -346,8 +346,8 @@ controller_server:
     # progresando — dispara una recovery.
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
-      movement_time_allowance: 10.0
+      required_movement_radius: 0.15
+      movement_time_allowance: 15.0
     # Define "llegué": tolerancia en posición (xy) y orientación (yaw)
     # para dar el goal por cumplido — el mismo margen que en semana 08
     # usabas para decidir si ya estabas "en" un waypoint.

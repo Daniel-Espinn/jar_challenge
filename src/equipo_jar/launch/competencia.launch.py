@@ -24,12 +24,18 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from nav2_common.launch import RewrittenYaml
 
+from launch.conditions import IfCondition
+from launch.substitutions import PythonExpression
 
 def generate_launch_description():
     share = get_package_share_directory('equipo_jar')
     params = os.path.join(share, 'params', 'params.yaml')
     use_sim_time = LaunchConfiguration('use_sim_time')
     victimas = LaunchConfiguration('victimas')
+
+    localizador = LaunchConfiguration('localizador')
+    es_propio = IfCondition(PythonExpression(["'", localizador, "' == 'propio'"]))
+    es_amcl = IfCondition(PythonExpression(["'", localizador, "' == 'amcl'"]))
 
     nav2_params = RewrittenYaml(
         source_file=os.path.join(share, 'params', 'nav2_params.yaml'),
@@ -41,6 +47,8 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('victimas', default_value='5',
                               description='cantidad de víctimas a buscar (N)'),
+        DeclareLaunchArgument('localizador', default_value='propio',
+                              description='propio | amcl'),
 
         Node(
             package='equipo_jar',
@@ -56,6 +64,7 @@ def generate_launch_description():
         Node(
             package='nav2_amcl',
             executable='amcl',
+            condition=es_amcl,
             name='amcl',
             output='screen',
             parameters=[nav2_params],
@@ -63,6 +72,7 @@ def generate_launch_description():
         Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
+            condition=es_amcl,
             name='lifecycle_manager_localizacion',
             output='screen',
             parameters=[{'use_sim_time': use_sim_time,
@@ -109,5 +119,10 @@ def generate_launch_description():
                          'bond_timeout': 0.0,
                          'node_names': ['controller_server', 'planner_server',
                                         'behavior_server', 'bt_navigator']}],
+        ),
+        Node(
+            package='equipo_jar', executable='localizador', name='localizador',
+            output='screen', condition=es_propio,
+            parameters=[params, {'use_sim_time': use_sim_time}],
         ),
     ])
