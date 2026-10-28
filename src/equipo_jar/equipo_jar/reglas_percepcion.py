@@ -3,87 +3,70 @@ Funciones puras de percepcion sin involucrar ROS
 Van a ser llamadas en percepcion.py
 '''
 import numpy as np
+import cv2
 
-def agrupar_en_rachas():
+def agrupar_en_rachas(booleanos):
     """
     Agrupar los índices contiguos de un array booleano en "rachas".
 
-    Un obstáculo real casi nunca genera un solo punto "no mapeado" suelto:
-    genera una racha de varios rayos seguidos del lidar pegando en la misma
-    cara del objeto (igual que ya viste con `/scan_rojo` en semana 04). Acá
-    identificamos esas rachas para después convertir cada una en un objeto.
-
+    Una racha que tiene True en el ultimo y primer elemento se hace
+    una sola
     Parámetro: `booleanos`, un array de N bools (uno por rayo del scan,
     True donde ese rayo cayó en un punto "no mapeado").
-
-    Devolvé una lista de arrays de índices, uno por racha — por ejemplo,
-    para [F,F,T,T,T,F,T,T,F] tendría que devolver [[2,3,4], [6,7]].
+    Devuelve una lista de arrays de índices, uno por racha
     """
 
-    # Paso 1: devuelvo las posiciones de los True
-    # los True son aquellos rayos que detectaron algo
-    # que no estaba en el mapa
+    # devuelvo las posiciones de los True
     indices = np.flatnonzero(booleanos)
     if len(indices) == 0:
         return []
 
-    # Paso 2: diferencias entre vecinos y dónde hay salto
-    # la diferencia es como la diferencia de espacio entre postes
-    # si hay mas de un poste de diferencia entre postes
-    # es porque hubo un corte y ahi habria una coma que divide dos rachas
-    # los saltos nos devuelve efectivamente aquellos lugares en los
-    # que la diferencia es mayor a 1, es decir posiciones
+    # defino las diferencias entre vecinos y sus saltos
     # donde hubo cortes de racha
     diferencias = np.diff(indices)
-    saltos = np.flatnonzero(diferencias > 1)                   # posiciones (dentro de diferencias) donde la diferencia es > 1
+    saltos = np.flatnonzero(diferencias > 1) 
 
-    # Paso 3: cortar (acordate de los postes y el alambrado)
-    # ahora lo que hadcemos es separar en rachas para que queden
-    # divididas con un split que divida en base a los indices y cortes
+    # defino donde se cortan y las rachas en base a los cortes
     cortes = saltos + 1
     rachas = np.split(indices, cortes)
 
-    # Paso 4: el scan es circular
-    # si el largo de la lista de rachas es mayor a 1
-    # y si el primer elemento de la primer racha es igual
-    # a 0 y si el ultimo elemento de la ultima racha es igual
-    # al indice de del ultimo indice de la lista de booleanos
-    # concatenamos la primer racha sumando el final al inicio y
-    # y el incio al final, es la union entre 360 y 0
-    # va primero la ultima, y popeamos
-    if len(rachas) > 1 and rachas[0][0] == 0 and rachas[-1][-1] == (len(booleanos) - 1):     # primera empieza en 0  /  última termina en len(booleanos) - 1
-        rachas[0] = np.concatenate([rachas[-1], rachas[0]])   # ¿cuál va primero?
+    # como scan es circular si hay True en bordes concatenamos
+    if len(rachas) > 1 and rachas[0][0] == 0 and rachas[-1][-1] == (len(booleanos) - 1): 
+        rachas[0] = np.concatenate([rachas[-1], rachas[0]])
         rachas.pop()
 
-    # Paso 5 devolvemos la lista d erachas
     return rachas
 
 
 def puntos_en_mapa(rangos, angulos, tx, ty, yaw, rango_min, rango_max):
     """
+    traduccion de los scans y posicion actual del robot a coordenadas de los objetos
     Como necesitamos donde esta cada objeto en el mapa y el lidar
     nos da a que distancia del sensor esta cada cosa, esta funcion hace
     esa traduccion.
     """
-    # Nos quedamos con aquellos rayos que cumplen que 1.son finitos, 2.cuya distancia
-    # es mayor a la distancia minima 3.y cuya distancia es menor a la maxima
+    # filtramos rayos validos
     validos = (np.isfinite(rangos)) & (rangos >= rango_min) & (rangos <= rango_max)
-    # modificamos rangos para que los validos queden en su posicion
-    # y aquellos que no sean validos se le spone cero para que no molesten
+
+    # rangos invalidos en cero
     rangos = np.where(validos,rangos,0.0)
-    # ?
+
+    # punto desde lidar
     xs_laser = rangos * np.cos(angulos)
     ys_laser = rangos * np.sin(angulos)
-    # ?
+    
+    # centro de columna y fila
     c, s = np.cos(yaw), np.sin(yaw)
-    # Aplicamos la formula para obtener los puntos en el mapa
-    # usando las transformaciones. Tambien devolvemos los 
-    # los valores validos
+
+    # obtenemos puntos en mapa
     xs_map = tx + c*xs_laser - s*ys_laser
     ys_map = ty + s*xs_laser + c*ys_laser
     return xs_map, ys_map, validos
 
 def estimar_mitad_caja(ancho, ancho_min, ancho_max):
+    '''
+    
+    '''
     valor_ancho = np.clip(ancho, ancho_min, ancho_max)
     mitad_caja = valor_ancho / 2
     return mitad_caja
@@ -93,13 +76,77 @@ def corregir_al_centro(x_cara, y_cara, x_robot, y_robot, mitad_caja):
     Correo el punto de la cara media caja mas lejos del robot
     porque estimamos que ahi esta el centro
     '''
+    # calculo distancias e hipot
     dx = x_cara - x_robot
     dy = y_cara - y_robot
     largo = np.hypot(dx, dy)
 
+    # si estamos pegados devolvemos esas coords
     if largo == 0.0:
         return (x_cara, y_cara)
+
+    # si no calculamos centor de caja
     else:
         x_centro = x_cara + mitad_caja * (dx / largo)
         y_centro = y_cara + mitad_caja * (dy / largo)
         return (x_centro, y_centro)
+
+def mascara_rojo(imagen_bgr, hue_rojo_bajo_1, hue_rojo_alto_1, hue_rojo_bajo_2, hue_rojo_alto_2,
+                  saturacion_min, valor_min):
+    """Máscara binaria (255 = rojo)."""
+    # bgr a hsv
+    imagen_hsv = cv2.cvtColor(imagen_bgr, cv2.COLOR_BGR2HSV)
+
+    bajo1 = np.array([hue_rojo_bajo_1, saturacion_min, valor_min])
+    alto1 = np.array([hue_rojo_alto_1, 255, 255])
+
+    bajo2 = np.array([hue_rojo_bajo_2, saturacion_min, valor_min])
+    alto2 = np.array([hue_rojo_alto_2, 255, 255])
+
+    # creamos mascaras
+    mascara1 = cv2.inRange(imagen_hsv, bajo1, alto1)
+    mascara2 = cv2.inRange(imagen_hsv, bajo2, alto2)
+
+    # devolvemos mascara pixel a pixel
+    return cv2.bitwise_or(mascara1, mascara2)
+
+def rayos_sobre_rojo(rangos, angulos, R, t, fx, fy, cx, cy, mascara) -> np.array:
+    '''
+    Salida, un array con True en los rayos donde caiga en un pixel rojo y False donde sea distinto.
+    IN:
+        rangos: rayos del scan (m)
+        angulos: angulos de los rayos (en rad)
+        R (3x3): rotacion, transformacion laser al frame optico de la camara
+        t: traslacion vector de 3 coords. transformacion laser al frame optico de la camara
+        fx, fy, cx, cy: son los zooms y los centros. vienen de camara_info
+    '''
+
+    # punto lidar
+    x = rangos * np.cos(angulos)
+    y = rangos * np.sin(angulos)
+
+    # fila [x,y,0] por rayo
+    punto_laser = np.stack([x, y, np.zeros_like(x)], axis=1)
+
+    # mismo punto visto desde la camara
+    puntos_cam = punto_laser @ R.T + t
+    # derecha abajo y adelante
+    X,Y,Z = puntos_cam[:,0], puntos_cam[:,1], puntos_cam[:,2]
+
+    # del punto al vidiro 
+    en_frente = (np.isfinite(rangos)) & (Z > 0)
+    # no dividir por cero
+    Z_seguro = np.where(en_frente, Z, 1.0)
+    # obtenemos pixel con columnas y filas
+    columnas = np.round((X/Z_seguro) * fx + cx).astype(int)
+    filas = np.round((Y/Z_seguro) * fy + cy).astype(int)
+
+    # pasamos a ancho y alto la mascara de 255/0
+    alto,ancho = mascara.shape
+    dentro = (columnas >= 0) & (columnas < ancho) & (filas >= 0) & (filas < alto)
+
+    ok = en_frente & dentro
+    # arrancamos en false y rellenamos
+    sobre_rojo = np.zeros(len(rangos), dtype=bool)
+    sobre_rojo[ok] = mascara[filas[ok], columnas[ok]] > 0
+    return sobre_rojo

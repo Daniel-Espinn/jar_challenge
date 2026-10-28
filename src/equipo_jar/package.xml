@@ -15,7 +15,8 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>py_trees</exec_depend>
-  <test_depend>py_trees_ros</exec_depend>
+  <exce_depend>py_trees_ros</exec_depend>
+  <exce_depend>python3-opencv</exec_depend>
 
   <test_depend>python3-pytest</test_depend>
 
