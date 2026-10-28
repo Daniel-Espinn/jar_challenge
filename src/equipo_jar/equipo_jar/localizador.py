@@ -75,6 +75,13 @@ class Localizador(Node):
         self.declare_parameter('pose_inicial_theta', 0.0)
         # La largada es "cerca del origen, sin ser exacta" (§1): la nube
         # arranca ancha para cubrir ese error.
+
+        # Medir el error
+        self.declare_parameter('ruido_minimo_xy', 0.004)     # m por paso de odom
+        self.declare_parameter('ruido_minimo_theta', 0.004)  # rad por paso de odom
+        self.declare_parameter('actualizar_min_d', 0.03)     # m
+        self.declare_parameter('actualizar_min_a', 0.05)     # rad
+
         self.declare_parameter('dispersion_inicial_xy', 0.35)
         self.declare_parameter('dispersion_inicial_theta', 0.5)
         # Varianzas (no desvíos) del modelo de movimiento mecanum.
@@ -98,6 +105,12 @@ class Localizador(Node):
         self.sigma_sensor = self.get_parameter('sigma_sensor').value
         self.escala_avance = self.get_parameter('escala_avance').value
         self.escala_giro = self.get_parameter('escala_giro').value
+
+        self.ruido_min_xy = self.get_parameter('ruido_minimo_xy').value
+        self.ruido_min_theta = self.get_parameter('ruido_minimo_theta').value
+        self.actualizar_min_d = self.get_parameter('actualizar_min_d').value
+        self.actualizar_min_a = self.get_parameter('actualizar_min_a').value
+        self.odom_ult_correccion = None
 
         n = self.num_particulas
         dxy = self.get_parameter('dispersion_inicial_xy').value
@@ -157,6 +170,7 @@ class Localizador(Node):
                 # Primera odometría: publicar ya map -> odom con la pose inicial,
                 # así Nav2 tiene TF antes del primer scan.
                 self.ultimo_odom = (x, y, theta)
+                self.odom_ult_correccion = (x, y, theta) 
                 self.actualizar_map_odom(self.estimar_pose(self.particulas))
                 return
 
@@ -173,6 +187,11 @@ class Localizador(Node):
         if self.campo is None or self.ultimo_odom is None:
             return
         try:
+            ox, oy, ot = self.odom_ult_correccion
+            ux, uy, ut = self.ultimo_odom
+            if (math.hypot(ux - ox, uy - oy) < self.actualizar_min_d
+                    and abs(normalizar_angulo(ut - ot)) < self.actualizar_min_a):
+                return   # robot quieto: no corregir ni remuestrear (evita colapsar la nube)
             puntos = self.scan_a_puntos(msg)
             if puntos is None or len(puntos) == 0:
                 return
@@ -180,6 +199,7 @@ class Localizador(Node):
             self.particulas = self.remuestrear(self.particulas, pesos)
             self.actualizar_map_odom(self.estimar_pose(self.particulas))
             self.publicar_nube()
+            self.odom_ult_correccion = self.ultimo_odom
         except Exception as e:
             self.get_logger().error(f'recibir_scan: {e}', throttle_duration_sec=2.0)
 
@@ -267,9 +287,9 @@ class Localizador(Node):
         d_trans_y *= self.escala_avance
         d_rot *= self.escala_giro
 
-        std_x = math.sqrt(self.gamma1 * d_trans_x ** 2 + self.gamma2 * d_trans_y ** 2 + self.gamma3 * d_rot ** 2)
-        std_y = math.sqrt(self.gamma2 * d_trans_x ** 2 + self.gamma1 * d_trans_y ** 2 + self.gamma3 * d_rot ** 2)
-        std_rot = math.sqrt(self.gamma4 * d_trans_x ** 2 + self.gamma5 * d_trans_y ** 2 + self.gamma6 * d_rot ** 2)
+        std_x = math.sqrt(self.gamma1 * d_trans_x ** 2 + self.gamma2 * d_trans_y ** 2 + self.gamma3 * d_rot ** 2 + self.ruido_min_xy ** 2)
+        std_y = math.sqrt(self.gamma2 * d_trans_x ** 2 + self.gamma1 * d_trans_y ** 2 + self.gamma3 * d_rot ** 2 + self.ruido_min_xy ** 2)
+        std_rot = math.sqrt(self.gamma4 * d_trans_x ** 2 + self.gamma5 * d_trans_y ** 2 + self.gamma6 * d_rot ** 2 + self.ruido_min_theta ** 2)
 
         n = len(particulas)
         x_hat = d_trans_x - np.random.normal(0.0, std_x, n)
