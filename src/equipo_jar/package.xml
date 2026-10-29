@@ -23,6 +23,8 @@
   <exec_depend>nav2_common</exec_depend>
   <exec_depend>nav2_amcl</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>action_msgs</exec_depend>
 
   <test_depend>python3-pytest</test_depend>
 

@@ -125,4 +125,12 @@ def generate_launch_description():
             output='screen', condition=es_propio,
             parameters=[params, {'use_sim_time': use_sim_time}],
         ),
+        Node(
+            package='equipo_jar', executable='exploracion', name='exploracion',
+            output='screen',
+            parameters=[params, {
+                'use_sim_time': use_sim_time,
+                'cantidad_victimas': ParameterValue(victimas, value_type=int),
+            }],
+        ),
     ])
