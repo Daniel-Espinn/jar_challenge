@@ -27,6 +27,7 @@ setup(
             'percepcion = equipo_jar.percepcion:main',
             'gestor_victimas = equipo_jar.gestor_victimas:main',
             'localizador = equipo_jar.localizador:main',
+            'exploracion = equipo_jar.exploracion:main',
         ],
     },
 )

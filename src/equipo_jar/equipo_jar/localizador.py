@@ -73,6 +73,8 @@ class Localizador(Node):
         self.declare_parameter('pose_inicial_x', 0.0)
         self.declare_parameter('pose_inicial_y', 0.0)
         self.declare_parameter('pose_inicial_theta', 0.0)
+
+        self.declare_parameter('correcciones_en_reposo', 20)
         # La largada es "cerca del origen, sin ser exacta" (§1): la nube
         # arranca ancha para cubrir ese error.
 
@@ -89,7 +91,7 @@ class Localizador(Node):
             self.declare_parameter(f'gamma{i}', 0.0025)
         self.declare_parameter('submuestreo_scan', 15)
         self.declare_parameter('sigma_sensor', 0.2)
-        # Escalas medidas en el workshop 10 (paso 3). 1.0 = sin corrección.
+        
         self.declare_parameter('escala_avance', 1.0)
         self.declare_parameter('escala_giro', 1.0)
         self.declare_parameter('frecuencia_tf_hz', 20.0)
@@ -111,6 +113,9 @@ class Localizador(Node):
         self.actualizar_min_d = self.get_parameter('actualizar_min_d').value
         self.actualizar_min_a = self.get_parameter('actualizar_min_a').value
         self.odom_ult_correccion = None
+
+        self.max_correcciones_reposo = self.get_parameter('correcciones_en_reposo').value
+        self.correcciones_reposo = 0
 
         n = self.num_particulas
         dxy = self.get_parameter('dispersion_inicial_xy').value
@@ -189,9 +194,12 @@ class Localizador(Node):
         try:
             ox, oy, ot = self.odom_ult_correccion
             ux, uy, ut = self.ultimo_odom
-            if (math.hypot(ux - ox, uy - oy) < self.actualizar_min_d
-                    and abs(normalizar_angulo(ut - ot)) < self.actualizar_min_a):
-                return   # robot quieto: no corregir ni remuestrear (evita colapsar la nube)
+            quieto = (math.hypot(ux - ox, uy - oy) < self.actualizar_min_d
+                      and abs(normalizar_angulo(ut - ot)) < self.actualizar_min_a)
+            if quieto:
+                if self.correcciones_reposo >= self.max_correcciones_reposo:
+                    return   # ya se asentó: no seguir remuestreando con el robot parado
+                self.correcciones_reposo += 1
             puntos = self.scan_a_puntos(msg)
             if puntos is None or len(puntos) == 0:
                 return
