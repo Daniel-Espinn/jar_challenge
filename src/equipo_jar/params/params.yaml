@@ -15,6 +15,9 @@ nodo_equipo:
     margen_regreso_s: 20.0          # tmb en calcular_reserva
     duracion_corrida_s: 600.0       # usar en tiempo_restante
     periodo_logs_s: 10.0            # usar en toca_loguear
+    
+percepcion:
+  ros__parameters:
     hue_rojo_bajo_1: 0.0            # caja 1 de rojo min
     hue_rojo_alto_1: 10.0           # caja 1 de rojo max
     hue_rojo_bajo_2: 170.0          # caja 2 min
@@ -25,3 +28,11 @@ nodo_equipo:
     ancho_max: 0.40                 # usar en estimar_mitad_caja
     distancia_minima_valida: 0.25   # usar en puntos_en_mapa
     rayos_minimos: 3                # usar en agrupaar_rachas
+
+gestor_victimas:
+  ros__parameters:
+    radio_asociacion: 0.4
+    min_avisos: 5
+    disp_max: 0.10
+    radio_duplicado: 0.6
+    espera_inicial_s: 5.0
