@@ -156,5 +156,18 @@ def toca_loguear(t_ultimo_log_s:float | None, t_ahora_s:float, periodo_s:float =
     return loguear
 
     
+class EstadoCorrida():
+    def __init__(self, n_victimas):
+        self.mapa_recibido = False
+        self.t_inicio = None
+        self.ahora = 0.0
+        self.pose = None
+        self.largada = None
+        self.reportes_hechos = 0
+        self.n_victimas = n_victimas
+        self.viewpoints = []
+        self.indice_vp = 0
+        self.done_publicado = False
 
 
+        
