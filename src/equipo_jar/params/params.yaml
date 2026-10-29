@@ -31,8 +31,8 @@ percepcion:
 
 gestor_victimas:
   ros__parameters:
-    radio_asociacion: 0.4
-    min_avisos: 5
-    disp_max: 0.10
-    radio_duplicado: 0.6
-    espera_inicial_s: 5.0
+    radio_asociacion: 0.4           # usar en al_recibir_observacion
+    min_avisos: 5                   # usar en esta_confirmada
+    disp_max: 0.10                  # usar en esta_confirmada
+    radio_duplicado: 0.6            # usar en es_duplicado
+    espera_inicial_s: 5.0           # usar en hay_que_reportar
