@@ -45,8 +45,8 @@ exploracion:
     factor_escala: 4
     rango_cobertura: 2.0
     fov_camara_grados: 70.0
-    margen_objetivo: 0.30
-    tiempo_asentamiento_s: 4.0
+    margen_objetivo: 0.38
+    tiempo_asentamiento_s: 6.0
     tiempo_max_objetivo_s: 45.0
     giro_orientar: 0.3
     tiempo_regreso_s: 480.0

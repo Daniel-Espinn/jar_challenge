@@ -1,3 +1,24 @@
+"""Exploración del equipo: cobertura del mapa conocido, con goals a Nav2.
+
+El juez publica el mapa del laberinto (/map); lo desconocido son las cajas.
+Este nodo decide A DÓNDE ir (qué zona todavía no se vio con la cámara) y deja
+que Nav2 planifique y esquive (acción NavigateToPose). No publica /cmd_vel
+salvo para girar despacio en el lugar y apuntar la cámara a lo no visto.
+
+Diferencias con el workshop 08:
+  - La cobertura se marca solo dentro del campo de visión de la CÁMARA y hasta
+    un alcance corto: las cajas se detectan con la cámara (frontal), no con el
+    lidar de 360°.
+  - Sin 2D Pose Estimate ni topics de debug: arranca solo cuando hay /map, TF
+    map->base y Nav2 listo.
+  - El objetivo se elige por distancia de camino (BFS sobre el mapa con margen
+    a las paredes), no en línea recta.
+  - Goals solo sobre celdas libres con margen a las paredes; los fallidos se
+    descartan para no quedar en un bucle de recoveries.
+  - Regreso a la largada y /done (parámetros volver_a_la_largada y publicar_done).
+
+Estados: esperando -> asentando -> explorando <-> orientando -> regresando -> terminado
+"""
 import math
 from collections import deque
 from functools import partial
@@ -84,8 +105,11 @@ class Exploracion(Node):
         P('max_fallos_celda', 2)
         P('giro_orientar', 0.3)               # rad/s: lento, percepción ignora giros rápidos
         P('tolerancia_orientar_grados', 8.0)
-        P('tiempo_max_orientar_s', 12.0)
+        P('tiempo_max_orientar_s', 8.0)
         P('radio_orientar', 2.0)
+        P('radio_ya_visto', 0.35)             # m: alrededor del robot se da por visto (la cámara no ve tan cerca)
+        P('distancia_min_destino', 0.5)       # m: no elegir destinos más cerca que esto (Nav2 los da por cumplidos)
+        P('max_elecciones_celda', 3)          # veces que se puede elegir una celda sin lograr verla
         P('tiempo_regreso_s', 480.0)          # s desde que llega /map
         P('volver_a_la_largada', True)
         P('intentos_regreso', 3)
@@ -110,6 +134,9 @@ class Exploracion(Node):
         self.tol_orientar = math.radians(g('tolerancia_orientar_grados'))
         self.t_max_orientar = g('tiempo_max_orientar_s')
         self.radio_orientar = g('radio_orientar')
+        self.radio_ya_visto = g('radio_ya_visto')
+        self.dist_min_destino = g('distancia_min_destino')
+        self.max_elecciones = g('max_elecciones_celda')
         self.t_regreso = g('tiempo_regreso_s')
         self.volver = g('volver_a_la_largada')
         self.max_intentos_regreso = g('intentos_regreso')
@@ -179,6 +206,7 @@ class Exploracion(Node):
         self.libre_c = bloques.mean(axis=(1, 3)) > 0.5
         self.cubierta = np.zeros((ac, an), dtype=bool)
         self.fallos = np.zeros((ac, an), dtype=int)
+        self.elecciones = np.zeros((ac, an), dtype=int)
         self.res_c = res * f
         self.res = res
         self.ox, self.oy = msg.info.origin.position.x, msg.info.origin.position.y
@@ -250,6 +278,18 @@ class Exploracion(Node):
             if not self.dentro_grueso(f0, c0):
                 return
 
+            # Alrededor del robot se da por visto: la cámara no enfoca tan cerca y ahí
+            # no puede haber una caja sin que el robot la esté tocando.
+            bx, by = tf_b.transform.translation.x, tf_b.transform.translation.y
+            fb, cb = self.mundo_a_grueso(bx, by)
+            r = int(math.ceil(self.radio_ya_visto / self.res_c))
+            for df in range(-r, r + 1):
+                for dc in range(-r, r + 1):
+                    if math.hypot(df, dc) * self.res_c <= self.radio_ya_visto:
+                        fila, col = fb + df, cb + dc
+                        if self.dentro_grueso(fila, col) and self.libre_c[fila, col]:
+                            self.cubierta[fila, col] = True
+
             rangos = np.array(msg.ranges)
             n = len(rangos)
             ang = msg.angle_min + np.arange(n) * msg.angle_increment
@@ -312,9 +352,16 @@ class Exploracion(Node):
             fi, fj = self.meta[i, j]
             dd = d[fi, fj]
             if dd < 0:
-                continue
+                continue          # inalcanzable
+            gx, gy = self.fino_a_mundo(fi, fj)
+            if math.hypot(gx - x, gy - y) < self.dist_min_destino:
+                continue          # pegado al robot: Nav2 lo daría por cumplido sin moverse
             if mejor is None or dd < mejor_d:
                 mejor, mejor_d = (int(i), int(j)), dd
+        if mejor is None:
+            self.get_logger().info(
+                f'{int(pend.sum())} celdas restantes inalcanzables o pegadas al robot: se descartan.')
+            self.cubierta |= pend
         return mejor
 
     def yaw_hacia_lo_no_visto(self, x, y, yaw_actual):
@@ -330,13 +377,16 @@ class Exploracion(Node):
         if cerca.sum() < 2:
             return None
         angs = np.arctan2(dy[cerca], dx[cerca])
-        mejor, mejor_n = None, 1
+        mejor, mejor_n = None, 2     # solo se gira si hay al menos 3 celdas sin ver en esa dirección
         for k in range(24):
             h = -math.pi + k * (2 * math.pi / 24)
             cuenta = int(np.sum(np.abs(np.arctan2(np.sin(angs - h), np.cos(angs - h))) <= self.fov / 2.0))
             mas_cerca = mejor is not None and abs(normalizar_angulo(h - yaw_actual)) < abs(normalizar_angulo(mejor - yaw_actual))
             if cuenta > mejor_n or (cuenta == mejor_n and mas_cerca):
                 mejor, mejor_n = h, cuenta
+        # Si la cámara ya apunta casi para ahí, no hace falta girar
+        if mejor is not None and abs(normalizar_angulo(mejor - yaw_actual)) < math.radians(25):
+            return None
         return mejor
 
     # =========================================================== goals a Nav2
@@ -399,6 +449,7 @@ class Exploracion(Node):
             if gh is not None:
                 gh.cancel_goal_async()
 
+    # =========================================================== máquina de estados
     def cambiar(self, nuevo):
         if nuevo != self.estado:
             self.get_logger().info(f'Estado: {self.estado} -> {nuevo}')
@@ -469,7 +520,7 @@ class Exploracion(Node):
             self.get_logger().error(f'ciclo: {e}', throttle_duration_sec=2.0)
 
     def explorar(self, x, y, yaw, ahora):
-        if self.llegue:   
+        if self.llegue:     # llegó a un destino: apuntar la cámara a lo no visto
             self.llegue = False
             self.yaw_objetivo = self.yaw_hacia_lo_no_visto(x, y, yaw)
             if self.yaw_objetivo is not None:
@@ -483,9 +534,13 @@ class Exploracion(Node):
                 self.get_logger().warn('Goal con timeout; lo cancelo.')
                 self.fallos[celda] += 1
                 self.cancelar_activo()
+                return
             elif self.cubierta[celda]:
-                self.cancelar_activo()      # se vio de paso: elegir otro, sin penalizar
-            return
+                # Se vio de paso: seguir con otro destino SIN cancelar. Al llegar el goal
+                # nuevo, Nav2 reemplaza al actual sin frenar el robot.
+                self.activo = None
+            else:
+                return
 
         if self.no_enviar_hasta is not None and ahora.nanoseconds < self.no_enviar_hasta:
             return
@@ -493,6 +548,11 @@ class Exploracion(Node):
         if celda is None:
             self.get_logger().info('No queda nada por cubrir.')
             self.iniciar_regreso()
+            return
+        self.elecciones[celda] += 1
+        if self.elecciones[celda] > self.max_elecciones:
+            self.get_logger().warn(f'Celda {celda} elegida {self.max_elecciones} veces sin verse: la descarto.')
+            self.cubierta[celda] = True
             return
         fi, fj = self.meta[celda]
         gx, gy = self.fino_a_mundo(fi, fj)
