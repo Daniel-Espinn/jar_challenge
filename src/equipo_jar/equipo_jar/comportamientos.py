@@ -2,8 +2,8 @@ import py_trees
 from py_trees.common import Status
 
 from equipo_jar.reglas_cerebro import (
-    tiempo_restante, distancia, calcular_reserva, hay_que_volver
-)
+    tiempo_restante, distancia, calcular_reserva, hay_que_volver, yaw_a_cuaternion)
+from nav2_msgs.action import NavigateToPose
 
 class EsperarMapa(py_trees.behaviour.Behaviour):
     '''RUNNING hasta que arranco la corrida cuando haya hora de inicio'''
@@ -99,3 +99,34 @@ class PublicarDone(py_trees.behaviour.Behaviour):
             self.publicar()
             self.estado.done_publicado = True
         return Status.SUCCESS
+
+class PrepararMeta(py_trees.behaviour.Behaviour):
+    '''Arma la meta de Nav2 (viewpoint)'''
+    def __init__(self,name, estado, destino, clave):
+        super().__init__(name)
+        self.estado = estado
+        self.destino = destino
+        self.clave = clave
+        self.bb = self.attach_blackboard_client(name=name)
+        self.bb.register_key(key=clave, access=py_trees.common.Access.WRITE)
+
+    def update(self):
+        #1. Pose destino
+        if self.destino == 'largada':
+            p = self.estado.largada
+        else:
+            p = self.estado.viewpoints[self.estado.indice_vp]
+
+        # mensaje
+        meta = NavigateToPose.Goal()
+        meta.pose.header.frame_id = 'map'
+        meta.pose.pose.position.x = float(p.x)
+        meta.pose.pose.position.y = float(p.y)
+        z, w = yaw_a_cuaternion(p.yaw)
+        meta.pose.pose.orientation.z = z
+        meta.pose.pose.orientation.w = w
+
+        # al blackboard
+        self.bb.set(self.clave, meta)
+        return Status.SUCCESS
+
