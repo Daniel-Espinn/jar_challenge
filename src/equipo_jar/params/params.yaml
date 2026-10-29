@@ -36,3 +36,32 @@ gestor_victimas:
     disp_max: 0.10                  # usar en esta_confirmada
     radio_duplicado: 0.6            # usar en es_duplicado
     espera_inicial_s: 5.0           # usar en hay_que_reportar
+
+navegacion:
+  ros__parameters:
+    velocidad_maxima: 0.25
+    radio_repulsion : .40
+    ganancia_repulsiva: 0.15
+    tiempo_asentamiento_s: 3.0
+    tiempo_regreso_s: 480.0
+    tolerancia_llegada: 0.15
+
+localizador:
+  ros__parameters:
+    num_particulas: 500
+    pose_inicial_x: 0.0
+    pose_inicial_y: 0.0
+    pose_inicial_theta: 0.0
+    dispersion_inicial_xy: 0.35
+    dispersion_inicial_theta: 0.5
+    gamma1: 0.0025
+    gamma2: 0.0025
+    gamma3: 0.0025
+    gamma4: 0.0025
+    gamma5: 0.0025
+    gamma6: 0.0025
+    submuestreo_scan: 15
+    sigma_sensor: 0.2
+    escala_avance: 0.797
+    escala_giro: 0.802
+    publicar_nube: true

@@ -97,7 +97,6 @@ class NodoEquipo(Node):
             return  # esperar el mapa: no mover el robot ni reportar antes
 
         # TODO: acá va tu estrategia. Por ahora el robot se queda quieto.
-        self.pub_cmd_vel.publish(Twist())
 
         # Si ya publicamos /done con self.terminar() no hacemos nada
         if self.termino:
