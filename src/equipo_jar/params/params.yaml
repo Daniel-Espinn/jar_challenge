@@ -62,8 +62,8 @@ localizador:
     gamma6: 0.0025
     submuestreo_scan: 15
     sigma_sensor: 0.2
-    escala_avance: 0.797
-    escala_giro: 0.802
+    escala_avance: 1.0
+    escala_giro: 1.0
     publicar_nube: true
 
 exploracion:
@@ -76,5 +76,5 @@ exploracion:
     tiempo_max_objetivo_s: 45.0
     giro_orientar: 0.3
     tiempo_regreso_s: 480.0
-    volver_a_la_largada: true
+    volver_a_la_largada: false
     publicar_done: false
