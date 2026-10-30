@@ -76,5 +76,5 @@ exploracion:
     tiempo_max_objetivo_s: 45.0
     giro_orientar: 0.3
     tiempo_regreso_s: 480.0
-    volver_a_la_largada: false
-    publicar_done: false
+    volver_a_la_largada: true
+    publicar_done: true
