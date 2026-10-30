@@ -138,6 +138,7 @@ class Exploracion(Node):
         self.radio_ya_visto = g('radio_ya_visto')
         self.dist_min_destino = g('distancia_min_destino')
         self.max_elecciones = g('max_elecciones_celda')
+        self.peso_giro = g('peso_giro_m_por_rad')
         self.t_sin_avance = g('tiempo_sin_avance_s')
         self.t_regreso = g('tiempo_regreso_s')
         self.volver = g('volver_a_la_largada')
