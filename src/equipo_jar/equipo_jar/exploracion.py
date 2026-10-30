@@ -107,6 +107,7 @@ class Exploracion(Node):
         P('tolerancia_orientar_grados', 8.0)
         P('tiempo_max_orientar_s', 8.0)
         P('radio_orientar', 2.0)
+        P('tiempo_sin_avance_s', 15.0)        # s sin avanzar 0.15 m con un goal activo -> abandonarlo
         P('radio_ya_visto', 0.35)             # m: alrededor del robot se da por visto (la cámara no ve tan cerca)
         P('distancia_min_destino', 0.5)       # m: no elegir destinos más cerca que esto (Nav2 los da por cumplidos)
         P('max_elecciones_celda', 3)          # veces que se puede elegir una celda sin lograr verla
@@ -137,6 +138,7 @@ class Exploracion(Node):
         self.radio_ya_visto = g('radio_ya_visto')
         self.dist_min_destino = g('distancia_min_destino')
         self.max_elecciones = g('max_elecciones_celda')
+        self.t_sin_avance = g('tiempo_sin_avance_s')
         self.t_regreso = g('tiempo_regreso_s')
         self.volver = g('volver_a_la_largada')
         self.max_intentos_regreso = g('intentos_regreso')
@@ -161,6 +163,8 @@ class Exploracion(Node):
         self.yaw_objetivo = None
         self.t_orientar = None
         self.ticks_log = 0
+        self.pos_ref = None          # vigilante de progreso: dónde estaba hace un rato
+        self.t_ref = None
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -397,6 +401,7 @@ class Exploracion(Node):
         goal.pose.pose.position.x, goal.pose.pose.position.y = float(x), float(y)
         goal.pose.pose.orientation = yaw_a_quaternion(yaw)
         self.sig_id += 1
+        self.pos_ref = None
         self.activo = dict(id=self.sig_id, tipo=tipo, celda=celda, gh=None,
                            t=self.get_clock().now())
         self.get_logger().info(f'Goal #{self.sig_id} ({tipo}) -> ({x:.2f}, {y:.2f})')
@@ -530,6 +535,15 @@ class Exploracion(Node):
 
         if self.activo is not None:
             celda = self.activo['celda']
+            # Vigilante de progreso: si no avanzó 0.15 m en t_sin_avance, abandonar el goal
+            if self.pos_ref is None or math.hypot(x - self.pos_ref[0], y - self.pos_ref[1]) > 0.15:
+                self.pos_ref, self.t_ref = (x, y), ahora
+            elif (ahora - self.t_ref).nanoseconds * 1e-9 > self.t_sin_avance:
+                self.get_logger().warn(f'Sin avance hace {self.t_sin_avance:.0f} s; abandono la celda {celda}.')
+                self.fallos[celda] += 1
+                self.cancelar_activo()
+                self.pos_ref = None
+                return
             if (ahora - self.activo['t']).nanoseconds * 1e-9 > self.t_max_obj:
                 self.get_logger().warn('Goal con timeout; lo cancelo.')
                 self.fallos[celda] += 1
