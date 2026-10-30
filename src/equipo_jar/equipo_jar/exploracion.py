@@ -111,6 +111,7 @@ class Exploracion(Node):
         P('radio_ya_visto', 0.35)             # m: alrededor del robot se da por visto (la cámara no ve tan cerca)
         P('distancia_min_destino', 0.5)       # m: no elegir destinos más cerca que esto (Nav2 los da por cumplidos)
         P('max_elecciones_celda', 3)          # veces que se puede elegir una celda sin lograr verla
+        P('peso_giro_m_por_rad', 0.3).        # m equivalentes por radián de giro al elegir celda
         P('tiempo_regreso_s', 480.0)          # s desde que llega /map
         P('volver_a_la_largada', True)
         P('intentos_regreso', 3)
@@ -346,13 +347,13 @@ class Exploracion(Node):
                     cola.append((nf, nc))
         return np.array(d)
 
-    def elegir_celda(self, x, y):
-        """Celda gruesa pendiente más cercana POR CAMINO, o None si no queda ninguna."""
+        def elegir_celda(self, x, y, yaw):
+        """Celda pendiente con menor costo = metros de camino + peso_giro * radianes a girar."""
         pend = self.libre_c & ~self.cubierta & self.tiene_meta & (self.fallos < self.max_fallos)
         if not pend.any():
             return None
         d = self.distancias_bfs(*self.mundo_a_fino(x, y))
-        mejor, mejor_d = None, None
+        mejor, mejor_costo = None, None
         for i, j in zip(*np.where(pend)):
             fi, fj = self.meta[i, j]
             dd = d[fi, fj]
@@ -361,8 +362,11 @@ class Exploracion(Node):
             gx, gy = self.fino_a_mundo(fi, fj)
             if math.hypot(gx - x, gy - y) < self.dist_min_destino:
                 continue          # pegado al robot: Nav2 lo daría por cumplido sin moverse
-            if mejor is None or dd < mejor_d:
-                mejor, mejor_d = (int(i), int(j)), dd
+            camino_m = dd * self.res
+            giro = abs(normalizar_angulo(math.atan2(gy - y, gx - x) - yaw))
+            costo = camino_m + self.peso_giro * giro
+            if mejor is None or costo < mejor_costo:
+                mejor, mejor_costo = (int(i), int(j)), costo
         if mejor is None:
             self.get_logger().info(
                 f'{int(pend.sum())} celdas restantes inalcanzables o pegadas al robot: se descartan.')
@@ -559,7 +563,7 @@ class Exploracion(Node):
 
         if self.no_enviar_hasta is not None and ahora.nanoseconds < self.no_enviar_hasta:
             return
-        celda = self.elegir_celda(x, y)
+        celda = self.elegir_celda(x, y, yaw)
         if celda is None:
             self.get_logger().info('No queda nada por cubrir.')
             self.iniciar_regreso()
