@@ -50,7 +50,7 @@ def esta_confirmada(candidata:dict, min_avisos:int, disp_max:int) -> bool:
     '''
     ya estoy seguro de la candidata?
     '''
-    return len(candidata['xs']) >= min_avisos and dispersion(candidata) >= disp_max
+    return len(candidata['xs']) <= min_avisos and dispersion(candidata) >= disp_max
     
 
 def es_duplicada(pizarron:list, x:float, y:float, radio_dup:float) -> bool:
