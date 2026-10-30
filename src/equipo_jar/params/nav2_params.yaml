@@ -372,14 +372,14 @@ controller_server:
       debug_trajectory_details: True
       # min/max_vel_x: adelante/atrás, alineado con velocidad_adelante=0.3
       # de semana 03 para no meter un robot "distinto" a mitad de roadmap.
-      min_vel_x: -al0.1
+      min_vel_x: -0.1
       # min/max_vel_y: strafe lateral, ¡en 0 por default en nav2_bringup
       # porque asume un robot diferencial que no puede moverse de costado!
       # El X3 es mecanum — sí puede — así que este es el cambio central
       # del checkpoint: sin esto, DWB nunca generaría una trayectoria
       # lateral aunque el robot fuera capaz de hacerla.
       min_vel_y: 0.0
-      max_vel_x: -0.1
+      max_vel_x: 0.3
       max_vel_y: 0.0
       # velocidad angular máxima, alineado con velocidad_angular=1.0 de
       # semana 03.
