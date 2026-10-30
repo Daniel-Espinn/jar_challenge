@@ -52,13 +52,21 @@ def generate_launch_description():
 
         Node(
             package='equipo_jar',
-            executable='nodo_equipo',
-            name='nodo_equipo',
+            executable='gestor_victimas',
+            name='gestor_victimas',
             output='screen',
             parameters=[params, {
                 'use_sim_time': use_sim_time,
                 'cantidad_victimas': ParameterValue(victimas, value_type=int),
             }],
+        ),
+
+        Node(
+            package='equipo_jar',
+            executable='percepcion',
+            name='percepcion',
+            output='screen',
+            parameters=[params, {'use_sim_time': use_sim_time}],
         ),
 
         Node(
