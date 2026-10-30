@@ -111,7 +111,7 @@ class Exploracion(Node):
         P('radio_ya_visto', 0.35)             # m: alrededor del robot se da por visto (la cámara no ve tan cerca)
         P('distancia_min_destino', 0.5)       # m: no elegir destinos más cerca que esto (Nav2 los da por cumplidos)
         P('max_elecciones_celda', 3)          # veces que se puede elegir una celda sin lograr verla
-        P('peso_giro_m_por_rad', 0.3).        # m equivalentes por radián de giro al elegir celda
+        P('peso_giro_m_por_rad', 0.3)         # m equivalentes por radián de giro al elegir celda
         P('tiempo_regreso_s', 480.0)          # s desde que llega /map
         P('volver_a_la_largada', True)
         P('intentos_regreso', 3)
@@ -347,7 +347,7 @@ class Exploracion(Node):
                     cola.append((nf, nc))
         return np.array(d)
 
-        def elegir_celda(self, x, y, yaw):
+    def elegir_celda(self, x, y, yaw):
         """Celda pendiente con menor costo = metros de camino + peso_giro * radianes a girar."""
         pend = self.libre_c & ~self.cubierta & self.tiene_meta & (self.fallos < self.max_fallos)
         if not pend.any():
