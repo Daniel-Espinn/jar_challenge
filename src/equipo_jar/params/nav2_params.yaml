@@ -241,7 +241,7 @@ global_costmap:
       # semana 03, acá una capa más en vez de un `if distancia < margen`.
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 7.0
+        cost_scaling_factor: 5.0
         inflation_radius: 0.20
       always_send_full_costmap: True
 
@@ -275,7 +275,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 5.0
-        inflation_radius: 0.10
+        inflation_radius: 0.20
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
