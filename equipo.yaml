@@ -6,5 +6,5 @@
 # algún COMPLETAR.
 # El nombre tiene que ser el mismo con el que se inscribieron (las mayúsculas, los
 # espacios y los signos no importan, las letras sí).
-nombre_equipo: COMPLETAR
-codigo_inscripcion: COMPLETAR   # el código que recibiste al inscribirte
+nombre_equipo: Zonda Robotics
+codigo_inscripcion: 110   # el código que recibiste al inscribirte
