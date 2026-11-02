@@ -24,6 +24,10 @@ setup(
     entry_points={
         'console_scripts': [
             'nodo_equipo = equipo_jar.nodo_equipo:main',
+            'percepcion = equipo_jar.percepcion:main',
+            'gestor_victimas = equipo_jar.gestor_victimas:main',
+            'localizador = equipo_jar.localizador:main',
+            'exploracion = equipo_jar.exploracion:main',
         ],
     },
 )

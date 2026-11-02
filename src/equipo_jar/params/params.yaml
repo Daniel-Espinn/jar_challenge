@@ -1,12 +1,119 @@
-# Parámetros del equipo (reglamento §9.1).
-#
-# Acá solo van valores GENERALES: umbrales, ganancias, límites de velocidad,
-# rangos de color. Nada que dependa del mapa de la competencia: nada de
-# coordenadas, rutas ni posiciones de víctimas. El CI (tools/verificar_params.py)
-# rechaza estos archivos si rompen la regla.
-#
+# params generales, nada de coordenadas ni posiciones
 nodo_equipo:
   ros__parameters:
     frecuencia_control_hz: 10.0
     velocidad_lineal_max: 0.30      # m/s
     velocidad_angular_max: 1.00     # rad/s
+    velocidad_regreso_ms: 0.25
+    factor_cambio: 1.5
+    margen_regreso_s: 20.0
+    duracion_corrida_s: 600.0
+    periodo_logs_s: 10.0
+
+percepcion:
+  ros__parameters:
+    hue_rojo_bajo_1: 0.0
+    hue_rojo_alto_1: 10.0
+    hue_rojo_bajo_2: 170.0
+    hue_rojo_alto_2: 180.0
+    saturacion_min: 120.0
+    valor_min: 80.0
+    ancho_min: 0.10
+    ancho_max: 0.40
+    distancia_minima_valida: 0.25
+    distancia_maxima_valida: 1.2    # m
+    rayos_minimos: 3
+    salto_rango_max: 0.08           # m
+    margen_borde_px: 4              # px
+    desfase_max_imagen_s: 0.10      # s
+
+gestor_victimas:
+  ros__parameters:
+    radio_asociacion: 0.4
+    min_avisos: 5
+    disp_max: 0.10
+    radio_duplicado: 0.9            # m
+    espera_inicial_s: 5.0
+
+navegacion:
+  ros__parameters:
+    velocidad_maxima: 0.25
+    radio_repulsion : .40
+    ganancia_repulsiva: 0.15
+    tiempo_asentamiento_s: 3.0
+    tiempo_regreso_s: 480.0
+    tolerancia_llegada: 0.15
+
+localizador:
+  ros__parameters:
+    num_particulas: 500
+    pose_inicial_x: 0.0
+    pose_inicial_y: 0.0
+    pose_inicial_theta: 0.0
+    dispersion_inicial_xy: 0.35
+    dispersion_inicial_theta: 0.5
+    gamma1: 0.0025
+    gamma2: 0.0025
+    gamma3: 0.0025
+    gamma4: 0.0025
+    gamma5: 0.0025
+    gamma6: 0.0025
+    submuestreo_scan: 15
+    sigma_sensor: 0.2
+    escala_avance: 1.0
+    escala_giro: 1.0
+    publicar_nube: true
+
+exploracion:
+  ros__parameters:
+    duracion_corrida_s: 600.0
+    margen_final_s: 12.0
+    tiempo_asentamiento_s: 3.0
+    frecuencia_control_hz: 5.0
+    procesar_cada_n_scans: 1
+    radio_nav: 0.16
+    radio_paso: 0.12                # m
+    radio_giro: 0.25
+    footprint_adelante: 0.13
+    footprint_atras: 0.19
+    footprint_costado: 0.11
+    tau: 0.10                       # m
+    tau_por_metro: 0.03             # m
+    rango_max_votos: 2.5            # m
+    min_votos: 3
+    razon_min: 0.5
+    tam_min: 0.06                   # m
+    tam_max: 0.50                   # m
+    salud_min: 0.6
+    radio_asociacion: 0.35          # m
+    radio_rojo: 0.45                # m
+    rango_cobertura: 2.5            # m
+    ganancia_min: 25                # celdas
+    costo_fijo_m: 1.0               # m
+    paso_muestreo: 5                # celdas
+    dist_min_destino: 0.5           # m
+    tiempo_mirar_s: 2.5
+    max_intentos_mirar: 2
+    giro_orientar: 0.6              # rad/s
+    tolerancia_orientar_grados: 8.0
+    tiempo_max_orientar_s: 20.0     # s
+    tiempo_sin_progreso_s: 8.0      # s
+    progreso_min_m: 0.10
+    radio_zona_prohibida: 0.40
+    duracion_zona_prohibida_s: 30.0
+    escape_velocidad: 0.08          # m/s
+    escape_distancia: 0.12          # m
+    escape_despeje_min: 0.12        # m
+    escape_tiempo_max_s: 3.0
+    volver_a_la_largada: true
+    publicar_done: true
+    velocidad_efectiva: 0.15        # m/s
+    factor_reserva: 1.5
+    margen_reserva_s: 60.0          # s
+    intentos_regreso: 10
+    progreso_regreso_m: 0.30        # m
+    tramo_regreso_m: 1.2            # m
+    tramo_exploracion_m: 1.2        # m
+    tolerancia_ajuste_final: 0.06
+    tiempo_ajuste_final_s: 8.0
+    velocidad_ajuste_final: 0.08
