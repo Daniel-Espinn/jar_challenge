@@ -60,8 +60,8 @@ localizador:
     gamma6: 0.0025
     submuestreo_scan: 15
     sigma_sensor: 0.2
-    escala_avance: 1.0
-    escala_giro: 1.0
+    escala_avance: 0.79
+    escala_giro: 0.80
     publicar_nube: true
 
 exploracion:
