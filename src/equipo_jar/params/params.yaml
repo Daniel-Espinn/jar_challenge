@@ -30,7 +30,7 @@ percepcion:
 gestor_victimas:
   ros__parameters:
     radio_asociacion: 0.4
-    min_avisos: 5
+    min_avisos: 8
     disp_max: 0.10
     radio_duplicado: 0.9            # m
     espera_inicial_s: 5.0
@@ -77,17 +77,17 @@ exploracion:
     footprint_adelante: 0.13
     footprint_atras: 0.19
     footprint_costado: 0.11
-    tau: 0.10                       # m
+    tau: 0.08                       # m
     tau_por_metro: 0.03             # m
     rango_max_votos: 2.5            # m
     min_votos: 3
     razon_min: 0.5
     tam_min: 0.06                   # m
-    tam_max: 0.50                   # m
+    tam_max: 0.65                   # m
     salud_min: 0.6
     radio_asociacion: 0.35          # m
     radio_rojo: 0.45                # m
-    rango_cobertura: 2.5            # m
+    rango_cobertura: 1.5            # m
     ganancia_min: 25                # celdas
     costo_fijo_m: 1.0               # m
     paso_muestreo: 5                # celdas
@@ -99,8 +99,8 @@ exploracion:
     tiempo_max_orientar_s: 20.0     # s
     tiempo_sin_progreso_s: 8.0      # s
     progreso_min_m: 0.10
-    radio_zona_prohibida: 0.40
-    duracion_zona_prohibida_s: 30.0
+    radio_zona_prohibida: 0.50
+    duracion_zona_prohibida_s: 180.0
     escape_velocidad: 0.08          # m/s
     escape_distancia: 0.12          # m
     escape_despeje_min: 0.12        # m
